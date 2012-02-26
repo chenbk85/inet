@@ -115,7 +115,6 @@ $(TargetPath) --gtest_filter=-*ci_only.*
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(Filename).pb.h</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(Filename).pb.h</Outputs>
     </CustomBuild>
-    <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="message.pb.h" />

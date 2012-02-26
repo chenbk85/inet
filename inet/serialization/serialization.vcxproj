@@ -96,9 +96,6 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="pack.h" />
     <ClInclude Include="serialize.h" />
     <ClInclude Include="serialization.h" />

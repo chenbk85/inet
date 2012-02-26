@@ -93,9 +93,6 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="dispatcher.h" />
     <ClInclude Include="dispatcher_helper.h" />
     <ClInclude Include="io.h" />

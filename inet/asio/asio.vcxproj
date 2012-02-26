@@ -92,9 +92,6 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="acceptor.h" />
     <ClInclude Include="asio.h" />
     <ClInclude Include="asio_inc.h" />

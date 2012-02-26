@@ -91,9 +91,6 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="buffers.h" />
     <ClInclude Include="delegate.h" />
     <ClInclude Include="dispatcher.h" />
