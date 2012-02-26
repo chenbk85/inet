@@ -1,0 +1,6 @@
+*.sdf
+*.suo
+*.user
+immediate
+ipch
+library

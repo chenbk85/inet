@@ -1,0 +1,111 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "interface", "interface", "{29DCB939-C2DE-462A-9639-ECAF04A0B533}"
+	ProjectSection(SolutionItems) = preProject
+		inet\acceptor.h = inet\acceptor.h
+		inet\connector.h = inet\connector.h
+		inet\end_point.h = inet\end_point.h
+		inet\error.h = inet\error.h
+		inet\factory.h = inet\factory.h
+		inet\inet.h = inet\inet.h
+		inet\io_service.h = inet\io_service.h
+		inet\layer.h = inet\layer.h
+		inet\proactor.h = inet\proactor.h
+		inet\session.h = inet\session.h
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "foundation", "inet\foundation\foundation.vcxproj", "{31EBEEF8-3050-4EDC-BE75-D06919EDC8B3}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{4635FD2D-C38E-4AF8-9DBF-9B8D2591E215}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "foundation_test", "test\foundation_test\foundation_test.vcxproj", "{436D3409-E5A8-4E10-A472-BBD2610A7289}"
+	ProjectSection(ProjectDependencies) = postProject
+		{31EBEEF8-3050-4EDC-BE75-D06919EDC8B3} = {31EBEEF8-3050-4EDC-BE75-D06919EDC8B3}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "asio_test", "test\asio_test\asio_test.vcxproj", "{B4641015-F575-4F16-BB71-DE4043C75200}"
+	ProjectSection(ProjectDependencies) = postProject
+		{331AA646-06A7-4C70-9771-D19A3E11B9A7} = {331AA646-06A7-4C70-9771-D19A3E11B9A7}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "asio", "inet\asio\asio.vcxproj", "{331AA646-06A7-4C70-9771-D19A3E11B9A7}"
+	ProjectSection(ProjectDependencies) = postProject
+		{31EBEEF8-3050-4EDC-BE75-D06919EDC8B3} = {31EBEEF8-3050-4EDC-BE75-D06919EDC8B3}
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "core", "core", "{9B3DF3EE-80B2-4B39-AD6D-EF13ED6CD1F7}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "serialization", "inet\serialization\serialization.vcxproj", "{D49FF0FB-F536-4D2B-9C97-564B8109D50B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{31EBEEF8-3050-4EDC-BE75-D06919EDC8B3} = {31EBEEF8-3050-4EDC-BE75-D06919EDC8B3}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "serialization_test", "test\serialization_test\serialization_test.vcxproj", "{19C74880-DC51-4606-9280-78DF61C534BB}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D49FF0FB-F536-4D2B-9C97-564B8109D50B} = {D49FF0FB-F536-4D2B-9C97-564B8109D50B}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "protobuf", "inet\protobuf\protobuf.vcxproj", "{27280047-6622-4CFE-B1A8-1369A4DB6694}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D49FF0FB-F536-4D2B-9C97-564B8109D50B} = {D49FF0FB-F536-4D2B-9C97-564B8109D50B}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "protobuf_test", "test\protobuf_test\protobuf_test.vcxproj", "{A3835825-843F-4EC5-886E-C2C50685329E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{27280047-6622-4CFE-B1A8-1369A4DB6694} = {27280047-6622-4CFE-B1A8-1369A4DB6694}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{31EBEEF8-3050-4EDC-BE75-D06919EDC8B3}.Debug|Win32.ActiveCfg = Debug|Win32
+		{31EBEEF8-3050-4EDC-BE75-D06919EDC8B3}.Debug|Win32.Build.0 = Debug|Win32
+		{31EBEEF8-3050-4EDC-BE75-D06919EDC8B3}.Release|Win32.ActiveCfg = Release|Win32
+		{31EBEEF8-3050-4EDC-BE75-D06919EDC8B3}.Release|Win32.Build.0 = Release|Win32
+		{436D3409-E5A8-4E10-A472-BBD2610A7289}.Debug|Win32.ActiveCfg = Debug|Win32
+		{436D3409-E5A8-4E10-A472-BBD2610A7289}.Debug|Win32.Build.0 = Debug|Win32
+		{436D3409-E5A8-4E10-A472-BBD2610A7289}.Release|Win32.ActiveCfg = Release|Win32
+		{436D3409-E5A8-4E10-A472-BBD2610A7289}.Release|Win32.Build.0 = Release|Win32
+		{B4641015-F575-4F16-BB71-DE4043C75200}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B4641015-F575-4F16-BB71-DE4043C75200}.Debug|Win32.Build.0 = Debug|Win32
+		{B4641015-F575-4F16-BB71-DE4043C75200}.Release|Win32.ActiveCfg = Release|Win32
+		{B4641015-F575-4F16-BB71-DE4043C75200}.Release|Win32.Build.0 = Release|Win32
+		{331AA646-06A7-4C70-9771-D19A3E11B9A7}.Debug|Win32.ActiveCfg = Debug|Win32
+		{331AA646-06A7-4C70-9771-D19A3E11B9A7}.Debug|Win32.Build.0 = Debug|Win32
+		{331AA646-06A7-4C70-9771-D19A3E11B9A7}.Release|Win32.ActiveCfg = Release|Win32
+		{331AA646-06A7-4C70-9771-D19A3E11B9A7}.Release|Win32.Build.0 = Release|Win32
+		{D49FF0FB-F536-4D2B-9C97-564B8109D50B}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D49FF0FB-F536-4D2B-9C97-564B8109D50B}.Debug|Win32.Build.0 = Debug|Win32
+		{D49FF0FB-F536-4D2B-9C97-564B8109D50B}.Release|Win32.ActiveCfg = Release|Win32
+		{D49FF0FB-F536-4D2B-9C97-564B8109D50B}.Release|Win32.Build.0 = Release|Win32
+		{19C74880-DC51-4606-9280-78DF61C534BB}.Debug|Win32.ActiveCfg = Debug|Win32
+		{19C74880-DC51-4606-9280-78DF61C534BB}.Debug|Win32.Build.0 = Debug|Win32
+		{19C74880-DC51-4606-9280-78DF61C534BB}.Release|Win32.ActiveCfg = Release|Win32
+		{19C74880-DC51-4606-9280-78DF61C534BB}.Release|Win32.Build.0 = Release|Win32
+		{27280047-6622-4CFE-B1A8-1369A4DB6694}.Debug|Win32.ActiveCfg = Debug|Win32
+		{27280047-6622-4CFE-B1A8-1369A4DB6694}.Debug|Win32.Build.0 = Debug|Win32
+		{27280047-6622-4CFE-B1A8-1369A4DB6694}.Release|Win32.ActiveCfg = Release|Win32
+		{27280047-6622-4CFE-B1A8-1369A4DB6694}.Release|Win32.Build.0 = Release|Win32
+		{A3835825-843F-4EC5-886E-C2C50685329E}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A3835825-843F-4EC5-886E-C2C50685329E}.Debug|Win32.Build.0 = Debug|Win32
+		{A3835825-843F-4EC5-886E-C2C50685329E}.Release|Win32.ActiveCfg = Release|Win32
+		{A3835825-843F-4EC5-886E-C2C50685329E}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{331AA646-06A7-4C70-9771-D19A3E11B9A7} = {9B3DF3EE-80B2-4B39-AD6D-EF13ED6CD1F7}
+		{31EBEEF8-3050-4EDC-BE75-D06919EDC8B3} = {9B3DF3EE-80B2-4B39-AD6D-EF13ED6CD1F7}
+		{D49FF0FB-F536-4D2B-9C97-564B8109D50B} = {9B3DF3EE-80B2-4B39-AD6D-EF13ED6CD1F7}
+		{27280047-6622-4CFE-B1A8-1369A4DB6694} = {9B3DF3EE-80B2-4B39-AD6D-EF13ED6CD1F7}
+		{436D3409-E5A8-4E10-A472-BBD2610A7289} = {4635FD2D-C38E-4AF8-9DBF-9B8D2591E215}
+		{B4641015-F575-4F16-BB71-DE4043C75200} = {4635FD2D-C38E-4AF8-9DBF-9B8D2591E215}
+		{19C74880-DC51-4606-9280-78DF61C534BB} = {4635FD2D-C38E-4AF8-9DBF-9B8D2591E215}
+		{A3835825-843F-4EC5-886E-C2C50685329E} = {4635FD2D-C38E-4AF8-9DBF-9B8D2591E215}
+	EndGlobalSection
+EndGlobal
