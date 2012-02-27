@@ -3,82 +3,12 @@
 using testing::_;
 using testing::Invoke;
 
-class mock_session : public inet::asio::session
-{
-public:
-	mock_session()
-	{
-		on_connect = boost::bind(&mock_session::on_mock_connect, this);
-		on_data = boost::bind(&mock_session::on_mock_data, this, _1);
-		on_error = boost::bind(&mock_session::on_mock_error, this, _1);
-		on_close = boost::bind(&mock_session::on_mock_close, this);
-	}	
 
-	using inet::asio::session::send;
-	void send(const google::protobuf::Message& msg)
-	{
-		send(inet::protobuf::to_shared_buffer(msg));
-	}
-
-	MOCK_METHOD0(on_mock_connect, void ());
-	MOCK_METHOD1(on_mock_data, void (const inet::shared_buffer& ));
-	MOCK_METHOD1(on_mock_error, void (const inet::error& ));
-	MOCK_METHOD0(on_mock_close, void ());
-
-	inet::protobuf::dispatcher dispatcher_;
-};
-
-class mock_acceptor : public inet::asio::acceptor
-{
-public:
-	mock_acceptor()
-	{
-		on_connect = boost::bind(&mock_acceptor::on_mock_connect, this, _1);
-		on_close = boost::bind(&mock_acceptor::on_mock_close, this);
-	}
-
-	MOCK_METHOD1(on_mock_connect, void (inet::session_ptr));
-	MOCK_METHOD0(on_mock_close, void ());
-};
-
-class mock_proactor : public inet::asio::proactor
-{
-public:
-	explicit mock_proactor(int count)
-		: inet::asio::proactor(count)
-	{
-	}
-
-	inet::connector_ptr create_connector()
-	{
-		boost::shared_ptr<inet::asio::session> session(new mock_session);
-		session->open(io_service_);
-
-		create_connector_hooker_(session);
-		return session;
-	}
-
-	inet::session_ptr create_session()
-	{
-		boost::shared_ptr<inet::asio::session> session(new mock_session);
-		session->open(io_service_);
-
-		create_session_hooker_(session);
-		return session;
-	}
-
-	inet::acceptor_ptr create_acceptor()
-	{
-		boost::shared_ptr<inet::asio::acceptor> acceptor(new mock_acceptor);
-		acceptor->open(io_service_, [this] { return create_session(); });
-
-		create_acceptor_hooker_(acceptor);
-		return acceptor;
-	}
-
-	inet::delegate<boost::shared_ptr<inet::asio::session>> create_connector_hooker_;
-	inet::delegate<boost::shared_ptr<inet::asio::session>> create_session_hooker_;
-	inet::delegate<boost::shared_ptr<inet::asio::acceptor>> create_acceptor_hooker_;
+struct mock_handler	{
+	MOCK_METHOD0(on_connect, void ());
+	MOCK_METHOD1(on_data, void (const inet::shared_buffer& ));
+	MOCK_METHOD1(on_error, void (const inet::error& ));
+	MOCK_METHOD0(on_close, void ());
 };
 
 class multi_connect : public ::testing::TestWithParam<boost::tuple<int, int>>
@@ -89,10 +19,9 @@ TEST_P(multi_connect, connect_test)
 {
 	int thread_count, repeat_count;
 	boost::tie(thread_count, repeat_count) = GetParam();
+	mock_handler handler;
 
-	boost::scoped_ptr<mock_proactor> net(new mock_proactor(thread_count));
-	net->run();
-	
+	inet::proactor_ptr net(new inet::asio::proactor(thread_count));
 	inet::timer_ptr end_timer = net->create_timer();
 
 	tbb::atomic<int> closed_verify_count;
@@ -106,48 +35,32 @@ TEST_P(multi_connect, connect_test)
 		}
 	};
 
-	net->create_connector_hooker_ += [&] (boost::shared_ptr<inet::asio::session> s) {
-		auto session = boost::static_pointer_cast<mock_session>(s);
-		EXPECT_CALL(*session, on_mock_connect())
-			.Times(1);
-		EXPECT_CALL(*session, on_mock_close())
-			.Times(1);
+	EXPECT_CALL(handler, on_connect())
+		.Times(repeat_count);
+	EXPECT_CALL(handler, on_close())
+		.Times(repeat_count * 2);
 
-		ON_CALL(*session, on_mock_connect())
-			.WillByDefault(Invoke(session.get(), &mock_session::close));
-		ON_CALL(*session, on_mock_close())
-			.WillByDefault(Invoke(close_handler));
+	ON_CALL(handler, on_close())
+		.WillByDefault(Invoke(close_handler));
+
+	auto acceptor = net->listen(33333);
+	acceptor->on_connection = [&] (inet::session_ptr session) {
+		session->on_close = boost::bind(&mock_handler::on_close, boost::ref(handler));
+		session->on_data = boost::bind(&mock_handler::on_data, boost::ref(handler), _1);
 	};
-
-	net->create_session_hooker_ += [&] (boost::shared_ptr<inet::asio::session> ) {
-	};
-
-	net->create_acceptor_hooker_ += [&] (boost::shared_ptr<inet::asio::acceptor> a) {
-		auto acceptor = boost::static_pointer_cast<mock_acceptor>(a);
-		EXPECT_CALL(*acceptor, on_mock_connect(_))
-			.Times(repeat_count);
-		EXPECT_CALL(*acceptor, on_mock_close())
-			.Times(1);
-		ON_CALL(*acceptor, on_mock_connect(_))
-			.WillByDefault(Invoke([&] (inet::session_ptr s) {
-				auto session = boost::static_pointer_cast<mock_session>(s);
-				EXPECT_CALL(*session, on_mock_close())
-					.Times(1);
-				ON_CALL(*session, on_mock_close())
-					.WillByDefault(Invoke(close_handler));
-			}));
-	};
-
-	net->listen(33333);
 
 	inet::timer_ptr connect_timer = net->create_timer();
 	connect_timer->start([&] () ->bool {
 		for(int i = 0; i < repeat_count; ++i) {
-			net->connect(inet::end_point("localhost", 33333));
+			auto connector = net->connect(inet::end_point("localhost", 33333));
+			connector->on_connect = boost::bind(&mock_handler::on_connect, boost::ref(handler));
+			connector->on_connect += boost::bind(&inet::session::close, connector);
+			connector->on_close = boost::bind(&mock_handler::on_close, boost::ref(handler));
 		}
 		return false;
 	}, 50);
 
+	net->run();
 	net->wait_end();
 }
 
@@ -159,12 +72,11 @@ TEST_P(multi_listen, listen_test)
 {
 	int thread_count, listen_count, repeat_count;
 	boost::tie(thread_count, listen_count, repeat_count) = GetParam();
+	mock_handler handler;
 
-	boost::scoped_ptr<mock_proactor> net(new mock_proactor(thread_count));
-	net->run();
-
+	inet::proactor_ptr net(new inet::asio::proactor(thread_count));
 	inet::timer_ptr end_timer = net->create_timer();
-	
+
 	tbb::atomic<int> closed_verify_count;
 	closed_verify_count = repeat_count * listen_count * 2;
 	auto close_handler = [&] {
@@ -176,58 +88,43 @@ TEST_P(multi_listen, listen_test)
 		}
 	};
 
-	net->create_connector_hooker_ += [&] (boost::shared_ptr<inet::asio::session> s) {
-		auto session = boost::static_pointer_cast<mock_session>(s);
-		EXPECT_CALL(*session, on_mock_connect())
-			.Times(1);
-		EXPECT_CALL(*session, on_mock_close())
-			.Times(1);
+	EXPECT_CALL(handler, on_connect())
+		.Times(repeat_count * listen_count);
+	EXPECT_CALL(handler, on_close())
+		.Times(repeat_count * listen_count * 2);
 
-		ON_CALL(*session, on_mock_connect())
-			.WillByDefault(Invoke(session.get(), &mock_session::close));
-		ON_CALL(*session, on_mock_close())
-			.WillByDefault(Invoke(close_handler));
-	};
+	ON_CALL(handler, on_close())
+		.WillByDefault(Invoke(close_handler));
 
-	net->create_session_hooker_ += [&] (boost::shared_ptr<inet::asio::session> ) {
-	};
-
-	net->create_acceptor_hooker_ += [&] (boost::shared_ptr<inet::asio::acceptor> a) {
-		auto acceptor = boost::static_pointer_cast<mock_acceptor>(a);
-		EXPECT_CALL(*acceptor, on_mock_connect(_))
-			.Times(repeat_count);
-		EXPECT_CALL(*acceptor, on_mock_close())
-			.Times(1);
-		ON_CALL(*acceptor, on_mock_connect(_))
-			.WillByDefault(Invoke([&] (inet::session_ptr s) {
-				auto session = boost::static_pointer_cast<mock_session>(s);
-				EXPECT_CALL(*session, on_mock_close())
-					.Times(1);
-				ON_CALL(*session, on_mock_close())
-					.WillByDefault(Invoke(close_handler));
-			}));
-	};
-
-	boost::uint16_t port = 33333;
-	for(int i = 0, port1 = port; i < listen_count; ++i, ++port1) {
-		net->listen(static_cast<boost::uint16_t>(port1++));
-	}
+	inet::uint16 start_port = 33333;
+	for(inet::uint16 i = 0, port = start_port; i < listen_count; ++i, ++port)
+	{
+		auto acceptor = net->listen(port);
+		acceptor->on_connection = [&] (inet::session_ptr session) {
+			session->on_close = boost::bind(&mock_handler::on_close, boost::ref(handler));
+			session->on_data = boost::bind(&mock_handler::on_data, boost::ref(handler), _1);
+		};
+	}	
 
 	inet::timer_ptr connect_timer = net->create_timer();
 	connect_timer->start([&] () ->bool {
 		for(int i = 0; i < repeat_count; ++i) {
-			for(int i = 0, port1 = port; i < listen_count; ++i, ++port1) {
-				net->connect(inet::end_point("localhost", static_cast<boost::uint16_t>(port1++)));
+			for(inet::uint16 i = 0, port = start_port; i < listen_count; ++i, ++port) {
+				auto connector = net->connect(inet::end_point("localhost", port));
+				connector->on_connect = boost::bind(&mock_handler::on_connect, boost::ref(handler));
+				connector->on_connect += boost::bind(&inet::session::close, connector);
+				connector->on_close = boost::bind(&mock_handler::on_close, boost::ref(handler));
 			}
 		}
 		return false;
-	}, 50);	
+	}, 50);
 
+	net->run();
 	net->wait_end();
 }
 
 
-
+/*
 class multi_chat : public ::testing::TestWithParam<boost::tuple<int, int>>
 {
 };
@@ -316,7 +213,7 @@ TEST_P(multi_chat, chat_test)
 
 	net->wait_end();
 }
-
+*/
 
 INSTANTIATE_TEST_CASE_P(stable_test, multi_connect, ::testing::Values(
 	boost::tuples::make_tuple(1, 1),
@@ -329,9 +226,10 @@ INSTANTIATE_TEST_CASE_P(stable_test, multi_listen, ::testing::Values(
  	boost::tuples::make_tuple(1, 3, 10),
  	boost::tuples::make_tuple(1, 4, 20)
 	));
-
+/*
 INSTANTIATE_TEST_CASE_P(stable_test, multi_chat, ::testing::Values(
 	boost::tuples::make_tuple(1, 1),
 	boost::tuples::make_tuple(1, 10),
 	boost::tuples::make_tuple(1, 20)
 	));
+*/

@@ -44,7 +44,7 @@ void acceptor::post_accept()
 		core_->async_accept(new_session->socket(), strand_->wrap([=] (const boost::system::error_code& ec) {
 			post_accept();
 			if(!ec) {
-				on_connect(new_session);
+				on_connection(new_session);
 				new_session->post_receive();
 			} else if(error(ec)) {
 				on_error(error(ec));

@@ -22,7 +22,7 @@ proactor::~proactor()
 	wait_end();
 }
 
-inet::session_ptr proactor::connect(const end_point& endpoint)
+inet::connector_ptr proactor::connect(const end_point& endpoint)
 {
 	auto session = create_connector();
 	session->connect(endpoint);
@@ -30,21 +30,30 @@ inet::session_ptr proactor::connect(const end_point& endpoint)
 	return session;
 }
 
-inet::session_ptr proactor::connect(const end_point& endpoint, boost::function<void (session_ptr)> fun)
+inet::connector_ptr proactor::connect(const end_point& endpoint, boost::function<void ()> connect_handler)
 {
 	auto session = connect(endpoint);
-	boost::static_pointer_cast<asio::session>(session)->on_connect = boost::bind(fun, session);
+	session->on_connect = connect_handler;
 
 	return session;
 }
 
-void proactor::listen(uint16 port)
+inet::acceptor_ptr proactor::listen(uint16 port)
 {
 	auto acceptor = create_acceptor();
 	acceptor->listen(port);
 	acceptor->post_accept();
 
 	acceptor_list_.push_back(acceptor);
+	return acceptor;
+}
+
+inet::acceptor_ptr proactor::listen(uint16 port, boost::function<void (session_ptr)> connection_handler)
+{
+	auto acceptor = listen(port);
+	acceptor->on_connection = connection_handler;
+
+	return acceptor;
 }
 
 timer_ptr proactor::create_timer()

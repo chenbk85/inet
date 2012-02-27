@@ -13,7 +13,7 @@ struct acceptor
 	virtual void close() = 0;
 
 	delegate<void> on_listening;
-	delegate<session_ptr> on_connect;
+	delegate<session_ptr> on_connection;
 	delegate<error> on_error;
 	delegate<void> on_close;
 };

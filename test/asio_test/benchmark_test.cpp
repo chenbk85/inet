@@ -1,4 +1,4 @@
-
+/*
 using testing::_;
 using testing::Invoke;
 
@@ -235,3 +235,4 @@ INSTANTIATE_TEST_CASE_P(benchmark, multi_thread_chat_benchmark, ::testing::Value
 	));
 
 #endif
+*/

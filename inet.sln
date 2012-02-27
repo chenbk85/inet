@@ -7,7 +7,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "interface", "interface", "{
 		inet\connector.h = inet\connector.h
 		inet\end_point.h = inet\end_point.h
 		inet\error.h = inet\error.h
-		inet\factory.h = inet\factory.h
 		inet\inet.h = inet\inet.h
 		inet\io_service.h = inet\io_service.h
 		inet\layer.h = inet\layer.h
