@@ -8,5 +8,4 @@
 #include "proactor.h"
 #include "end_point.h"
 #include "error.h"
-#include "io_service.h"
 #include "layer.h"

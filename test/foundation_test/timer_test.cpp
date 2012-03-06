@@ -2,31 +2,27 @@
 using testing::_;
 using testing::Invoke;
 
-class mock_timer : public inet::timer
+class mock_timer
 {
 public:
-	explicit mock_timer(boost::asio::io_service& io_service)
-		: inet::timer(io_service)
-	{
-	}
-
-	MOCK_METHOD1(on_timeout, void(const boost::system::error_code& ));
+	MOCK_METHOD0(on_timeout, void());
 };
 
 TEST(timer_test, basic_test)
 {
 	boost::asio::io_service io_service;
 
-	boost::shared_ptr<mock_timer> timer(new mock_timer(io_service));
-	timer->start([&] () ->bool { return false; }, 100);
+	inet::timer timer(io_service);
+	mock_timer timer_handler;
+	timer.async_wait(boost::bind(&mock_timer::on_timeout, &timer_handler), boost::chrono::milliseconds(100));
 
 	bool ended = false;
-	EXPECT_CALL(*timer, on_timeout(_))
+	EXPECT_CALL(timer_handler, on_timeout())
 		.Times(1);
-	ON_CALL(*timer, on_timeout(_))
-		.WillByDefault(Invoke([&](const boost::system::error_code& ) {
+	ON_CALL(timer_handler, on_timeout())
+		.WillByDefault(Invoke([&] {
 			ended = true;
-		}));
+	}));
 
 	while(!ended) {
 		io_service.poll();

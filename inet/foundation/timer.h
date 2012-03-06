@@ -4,25 +4,20 @@
 
 namespace inet {
 
-class timer : public boost::noncopyable, public boost::enable_shared_from_this<timer>
+class timer : public boost::noncopyable
 {
 public:
 	explicit timer(boost::asio::io_service& io_service);
 	virtual ~timer();
 
-	virtual void start(boost::function<bool()> fun, uint32 expiry_time);
-	virtual void restart();
+	virtual void async_wait(boost::function<void()> fun, duration expiry_time);
+	virtual void wait(duration expiry_time);
 
 protected:
-	virtual void on_timeout(const boost::system::error_code& e);
-
-protected:
-	boost::scoped_ptr<boost::asio::deadline_timer> core_;
-
-	boost::function<bool()> fun_;
-	boost::posix_time::time_duration expiry_time_;
+	boost::scoped_ptr<boost::asio::basic_waitable_timer<clock>> core_;
 };
 
 typedef boost::shared_ptr<timer> timer_ptr;
+typedef boost::weak_ptr<timer> timer_handle;
 
 }

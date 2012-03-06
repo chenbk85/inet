@@ -66,12 +66,6 @@ void io_thread_service::post(boost::function<void()> job)
 	io_service_.post(job);
 }
 
-void io_thread_service::post(boost::function<void()> job, uint32 expiry_time) 
-{
-	timer_ptr t(new timer(io_service_));
-	t->start([job, t] () ->bool { job(); return false; }, expiry_time);
-}
-
 uint32 io_thread_service::size() const
 {
 	return pool_.size();

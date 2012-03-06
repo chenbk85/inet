@@ -53,7 +53,7 @@ std::vector<mutable_buffer> buffer(shared_buffer_list& bl)
 		result.push_back(inet::buffer(*iter));
 	}
 
-	return result;
+	return std::move(result);
 }
 
 }

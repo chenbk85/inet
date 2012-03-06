@@ -26,28 +26,26 @@ void acceptor::listen(uint16 port)
 		core_->listen();
 	} catch (boost::system::system_error& e) {
 		on_error(error(e.code()));
-		return;
 	}
-
-	on_listening();
 }
 
 void acceptor::post_accept()
 {
+	auto this_ptr = shared_from_this();
 	strand_->post([=] {
 		if(!core_->is_open()) {
-			on_close();
+			this_ptr->on_close();
 			return;
 		}
 
-		auto new_session = boost::static_pointer_cast<asio::session>(gen_session_());
-		core_->async_accept(new_session->socket(), strand_->wrap([=] (const boost::system::error_code& ec) {
-			post_accept();
+		auto new_session = boost::static_pointer_cast<asio::session>(this_ptr->gen_session_());
+		this_ptr->core_->async_accept(new_session->socket(), this_ptr->strand_->wrap([=] (const boost::system::error_code& ec) {
+			this_ptr->post_accept();
 			if(!ec) {
-				on_connection(new_session);
+				this_ptr->on_connection(new_session);
 				new_session->post_receive();
 			} else if(error(ec)) {
-				on_error(error(ec));
+				this_ptr->on_error(error(ec));
 			}
 		}));
 	});
@@ -55,8 +53,9 @@ void acceptor::post_accept()
 
 void acceptor::close()
 {
+	auto this_ptr = shared_from_this();
 	strand_->post([=] {
-		core_->close();
+		this_ptr->core_->close();
 	});
 }
 

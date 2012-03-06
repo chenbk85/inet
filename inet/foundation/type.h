@@ -1,6 +1,7 @@
 #pragma once
 
 #include <boost/cstdint.hpp>
+#include <boost/chrono.hpp>
 
 namespace inet {
 
@@ -13,5 +14,8 @@ typedef boost::uint8_t	uint8;
 typedef boost::uint16_t	uint16;
 typedef boost::uint32_t	uint32;
 typedef boost::uint64_t	uint64;
+
+typedef boost::chrono::high_resolution_clock clock;
+typedef clock::duration duration;
 
 }

@@ -13,7 +13,6 @@ public:
 	~io_thread_service();
 
 	void post(boost::function<void()> job);
-	void post(boost::function<void()> job, uint32 expiry_time);
 
 	uint32 size() const;
 
