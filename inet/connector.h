@@ -13,5 +13,6 @@ struct connector : session
 };
 
 typedef boost::shared_ptr<connector> connector_ptr;
+typedef boost::weak_ptr<connector> connector_handle;
 
 }

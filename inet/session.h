@@ -20,5 +20,6 @@ struct session
 };
 
 typedef boost::shared_ptr<session> session_ptr;
+typedef boost::weak_ptr<session> session_handle;
 
 }
