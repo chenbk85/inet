@@ -1,54 +1,7 @@
-/*
+
 using testing::_;
 using testing::Invoke;
 
-class mock_session_b : public inet::asio::session
-{
-};
-
-class mock_acceptor_b : public inet::asio::acceptor
-{
-};
-
-class mock_proactor_b : public inet::asio::proactor
-{
-public:
-	explicit mock_proactor_b(int count)
-		: inet::asio::proactor(count)
-	{
-	}
-
-	inet::connector_ptr create_connector()
-	{
-		boost::shared_ptr<inet::asio::session> session(new mock_session_b);
-		session->open(io_service_);
-
-		create_connector_hooker_(session);
-		return session;
-	}
-
-	inet::session_ptr create_session()
-	{
-		boost::shared_ptr<inet::asio::session> session(new mock_session_b);
-		session->open(io_service_);
-
-		create_session_hooker_(session);
-		return session;
-	}
-
-	inet::acceptor_ptr create_acceptor()
-	{
-		boost::shared_ptr<inet::asio::acceptor> acceptor(new mock_acceptor_b);
-		acceptor->open(io_service_, [this] { return create_session(); });
-
-		create_acceptor_hooker_(acceptor);
-		return acceptor;
-	}
-
-	inet::delegate<boost::shared_ptr<inet::asio::session>> create_connector_hooker_;
-	inet::delegate<boost::shared_ptr<inet::asio::session>> create_session_hooker_;
-	inet::delegate<boost::shared_ptr<inet::asio::acceptor>> create_acceptor_hooker_;
-};
 
 class multi_thread_connect_benchmark : public ::testing::TestWithParam<boost::tuple<int, int, int>> 
 {
@@ -67,50 +20,21 @@ TEST_P(multi_thread_connect_benchmark, connect_test)
 	connected_count = 0;
 	connect_failed_count = 0;
 
-	mock_proactor_b net(thread_count);
+	inet::proactor_ptr net(new inet::asio::proactor(thread_count));
 	
-	net.run();
+	auto acceptor = net->listen(33533, [&] (inet::session_ptr ) { ++accepted_count; });
+	acceptor->on_error = [&] (const inet::error& ) { ++accept_failed_count; };
 
-	net.create_connector_hooker_ += [&] (boost::shared_ptr<inet::asio::session> s) {
-		boost::weak_ptr<inet::session> s_handle = s;
-		s->on_connect += [&, s_handle] {
-			++connected_count;
-			s_handle.lock()->close();
-		};
-		s->on_error += [&] (const inet::error& ) {
-			++connect_failed_count;
-		};
-	};
+	for(int i = 0; i < connect_count; ++i) {
+		auto connector = net->connect(inet::end_point("localhost", 33533), [&] { ++connected_count; });
+		connector->on_error = [&] (const inet::error& ) { ++connect_failed_count; };
+	}
 
-	net.create_acceptor_hooker_ += [&] (boost::shared_ptr<inet::asio::acceptor> a) {
-		boost::shared_ptr<mock_acceptor_b> acceptor = boost::static_pointer_cast<mock_acceptor_b>(a);
-		acceptor->on_connect += [&] (inet::session_ptr ) {
-			++accepted_count;
-		};
-		acceptor->on_error += [&] (const inet::error& ) {
-			++accept_failed_count;
-		};
-	};
+	net->set_timeout([&] {
+		net->set_force_end();
+	}, boost::chrono::milliseconds(time_out));
 
-	static boost::uint16_t port = 33533;
-	net.listen(port);
-
-	inet::timer_ptr end_timer = net.create_timer();
-	end_timer->start([&] () ->bool {
-		net.set_force_end();
-		return false;
-	}, time_out);
-
-	inet::timer_ptr start_timer = net.create_timer();
-	start_timer->start([&] () ->bool {
-		for(int i = 0; i < connect_count; ++i) {
-			net.connect(inet::end_point("localhost", port));
-		}
-		return false;
-	}, 0);
-
-	net.wait_end();
-	port++;
+	net->wait_end();
 
 	std::cout << "accepted count : " << accepted_count << std::endl;
 //	std::cout << "accept failed count : " << accept_failed_count << std::endl;
@@ -140,63 +64,40 @@ TEST_P(multi_thread_chat_benchmark, chat_test)
 	connect_failed_count = 0;
 	closed_count = 0;
 
-	mock_proactor_b net(thread_count);
+	inet::proactor_ptr net(new inet::asio::proactor(thread_count));
 
-	net.run();
-
-	net.create_connector_hooker_ += [&] (boost::shared_ptr<inet::asio::session> s) {
-		boost::weak_ptr<inet::session> s_handle = s;
-		s->on_connect += [&] {
-			++connected_count;
+	auto acceptor = net->listen(33633, [&] (inet::session_ptr session) { 
+		++accepted_count;
+		session->on_close = [&] {
+			if(connect_count <= ++closed_count) {
+				net->set_force_end();
+			}
 		};
-		s->on_error += [&] (const inet::error& ) {
-			++connect_failed_count;
-		};
+		msg::chat message;
+		message.set_message("protobuf message");
+		session->send(inet::protobuf::to_shared_buffer(message));
+	});
+	acceptor->on_error = [&] (const inet::error& ) { ++accept_failed_count; };
 
-		s->on_data += [&, s_handle] (inet::shared_buffer ) {
+	for(int i = 0; i < connect_count; ++i) {
+		auto connector = net->connect(inet::end_point("localhost", 33633), [&] { ++connected_count; });
+		inet::connector_handle handle = connector;
+		connector->on_data = [&, handle] (const inet::shared_buffer& ) { 
 			++received_count;
-			s_handle.lock()->close();
+			if(inet::connector_ptr connector = handle.lock()) {
+				connector->close();
+			}
 		};
-	};
+		connector->on_error = [&] (const inet::error& ) { ++connect_failed_count; };
+	}
 
-	net.create_acceptor_hooker_ += [&] (boost::shared_ptr<inet::asio::acceptor> a) {
-		boost::shared_ptr<mock_acceptor_b> acceptor = boost::static_pointer_cast<mock_acceptor_b>(a);
-		acceptor->on_connect += [&] (inet::session_ptr s) {
-			++accepted_count;
-			s->on_close += [&] {
-				if(connect_count <= ++closed_count) {
-					net.set_force_end();
-				}
-			};
+	net->wait_end();
 
-			msg::chat message;
-			message.set_message("protobuf message");
-			s->send(inet::protobuf::to_shared_buffer(message));
-		};
-		acceptor->on_error += [&] (const inet::error& ) {
-			++accept_failed_count;
-		};
-	};	
-
-	static boost::uint16_t port = 33633;
-	net.listen(port);
-
-	inet::timer_ptr start_timer = net.create_timer();
-	start_timer->start([&] () ->bool {
-		for(int i = 0; i < connect_count; ++i) {
-			net.connect(inet::end_point("localhost", port));
-		}
-		return false;
-	}, 0);
-
-	net.wait_end();
-	port++;
-
-// 	std::cout << "accepted count : " << accepted_count << std::endl;
-// 	std::cout << "accept failed count : " << accept_failed_count << std::endl;
-// 	std::cout << "received count : " << received_count << std::endl;
-// 	std::cout << "connected count : " << connected_count << std::endl;
-// 	std::cout << "connect failed count : " << connect_failed_count << std::endl;
+	std::cout << "accepted count : " << accepted_count << std::endl;
+//	std::cout << "accept failed count : " << accept_failed_count << std::endl;
+	std::cout << "received count : " << received_count << std::endl;
+	std::cout << "connected count : " << connected_count << std::endl;
+//	std::cout << "connect failed count : " << connect_failed_count << std::endl;
 }
 
 
@@ -212,7 +113,7 @@ INSTANTIATE_TEST_CASE_P(benchmark, multi_thread_connect_benchmark, ::testing::Va
 INSTANTIATE_TEST_CASE_P(benchmark, multi_thread_chat_benchmark, ::testing::Values(
 	boost::tuples::make_tuple(0, 50)
 	));
-
+	
 #else
 
 // <0> thread count [0 = default] <1> time(milliseconds) <2> connect count
@@ -235,4 +136,3 @@ INSTANTIATE_TEST_CASE_P(benchmark, multi_thread_chat_benchmark, ::testing::Value
 	));
 
 #endif
-*/
