@@ -36,10 +36,8 @@ TEST_P(multi_thread_connect_benchmark, connect_test)
 
 	net->wait_end();
 
-	std::cout << "accepted count : " << accepted_count << std::endl;
-//	std::cout << "accept failed count : " << accept_failed_count << std::endl;
-	std::cout << "connected count : " << connected_count << std::endl;
-//	std::cout << "connect failed count : " << connect_failed_count << std::endl;
+	std::cout << "accepted : accept failed : connected : connect failed" << std::endl;
+	std::cout << accepted_count << " : " << accept_failed_count << " : " << connected_count << " : " << connect_failed_count << std::endl;
 }
 
 class multi_thread_chat_benchmark : public ::testing::TestWithParam<boost::tuple<int, int>> 
@@ -93,11 +91,8 @@ TEST_P(multi_thread_chat_benchmark, chat_test)
 
 	net->wait_end();
 
-	std::cout << "accepted count : " << accepted_count << std::endl;
-//	std::cout << "accept failed count : " << accept_failed_count << std::endl;
-	std::cout << "received count : " << received_count << std::endl;
-	std::cout << "connected count : " << connected_count << std::endl;
-//	std::cout << "connect failed count : " << connect_failed_count << std::endl;
+	std::cout << "accepted : accept failed : received count : connected : connect failed" << std::endl;
+	std::cout << accepted_count << " : " << accept_failed_count << " : " << received_count << " : " << connected_count << " : " << connect_failed_count << std::endl;
 }
 
 

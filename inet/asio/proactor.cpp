@@ -64,8 +64,10 @@ timer_handle proactor::set_timeout(boost::function<void()> cb, duration expiry_t
 	{
 		timer_handle handle = t;
 		t->async_wait([=] {
-			cb();
-			clear_timeout(handle);
+			if(!handle.expired()) {
+				cb();
+				clear_timeout(handle);
+			}
 		}, expiry_time);
 
 		acc->second = t;
@@ -89,8 +91,8 @@ timer_handle proactor::set_interval(boost::function<void()> cb, duration expiry_
 		timer_handle handle = t;
 		boost::function<void()> handler;
 		handler = [=] {
-			cb();
 			if(handle.lock()) {
+				cb();
 				handle.lock()->async_wait(handler, expiry_time);
 			}
 		};
