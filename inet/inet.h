@@ -6,6 +6,7 @@
 #include "connector.h"
 #include "acceptor.h"
 #include "proactor.h"
+#include "reactor.h"
 #include "end_point.h"
 #include "error.h"
 #include "layer.h"
