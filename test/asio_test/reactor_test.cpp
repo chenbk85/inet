@@ -11,18 +11,17 @@ struct mock_handler	{
 	MOCK_METHOD0(on_close, void ());
 };
 
-class proactor_multi_connect : public ::testing::TestWithParam<boost::tuple<int, int>>
+class reactor_multi_connect : public ::testing::TestWithParam<int>
 {
 };
 
-TEST_P(proactor_multi_connect, connect_test)
+TEST_P(reactor_multi_connect, connect_test)
 {
-	int thread_count, repeat_count;
-	boost::tie(thread_count, repeat_count) = GetParam();
+	int repeat_count = GetParam();
 	mock_handler handler;
 
-	inet::proactor_ptr net(new inet::asio::proactor(thread_count));
-	
+	inet::reactor_ptr net(new inet::asio::reactor);
+
 	tbb::atomic<int> closed_verify_count;
 	closed_verify_count = repeat_count * 2;
 	auto close_handler = [&] {
@@ -51,21 +50,21 @@ TEST_P(proactor_multi_connect, connect_test)
 		connector->on_close = boost::bind(&mock_handler::on_close, boost::ref(handler));
 	}
 
-	net->wait_end();
+	net->run();
 }
 
-class proactor_multi_listen : public ::testing::TestWithParam<boost::tuple<int, int, int>>
+class reactor_multi_listen : public ::testing::TestWithParam<boost::tuple<int, int>>
 {
 };
 
-TEST_P(proactor_multi_listen, listen_test)
+TEST_P(reactor_multi_listen, listen_test)
 {
-	int thread_count, listen_count, repeat_count;
-	boost::tie(thread_count, listen_count, repeat_count) = GetParam();
+	int listen_count, repeat_count;
+	boost::tie(listen_count, repeat_count) = GetParam();
 	mock_handler handler;
 
-	inet::proactor_ptr net(new inet::asio::proactor(thread_count));
-	
+	inet::reactor_ptr net(new inet::asio::reactor);
+
 	tbb::atomic<int> closed_verify_count;
 	closed_verify_count = repeat_count * listen_count * 2;
 	auto close_handler = [&] {
@@ -100,23 +99,25 @@ TEST_P(proactor_multi_listen, listen_test)
 		}
 	}
 
-	net->wait_end();
+	while(!net->stopped()) {
+		net->poll();
+		boost::thread::yield();
+	}
 }
 
 
 
-class proactor_multi_chat : public ::testing::TestWithParam<boost::tuple<int, int>>
+class reactor_multi_chat : public ::testing::TestWithParam<int>
 {
 };
 
-TEST_P(proactor_multi_chat, chat_test)
+TEST_P(reactor_multi_chat, chat_test)
 {
-	int thread_count, repeat_count;
-	boost::tie(thread_count, repeat_count) = GetParam();
+	int repeat_count = GetParam();
 
 	mock_handler handler;
 
-	inet::proactor_ptr net(new inet::asio::proactor(thread_count));
+	inet::reactor_ptr net(new inet::asio::reactor);
 
 	tbb::atomic<int> closed_verify_count;
 	closed_verify_count = repeat_count * 2;
@@ -163,33 +164,21 @@ TEST_P(proactor_multi_chat, chat_test)
 		connector->on_close = boost::bind(&mock_handler::on_close, boost::ref(handler));
 	}
 
-	net->wait_end();
+	net->run();
 }
 
 
-INSTANTIATE_TEST_CASE_P(stable_test, proactor_multi_connect, ::testing::Values(
-	boost::tuples::make_tuple(1, 1),
- 	boost::tuples::make_tuple(1, 10),
- 	boost::tuples::make_tuple(1, 20),
-	boost::tuples::make_tuple(4, 1),
+INSTANTIATE_TEST_CASE_P(stable_test, reactor_multi_connect, ::testing::Values(
+	1, 10, 20, 30));
+
+INSTANTIATE_TEST_CASE_P(stable_test, reactor_multi_listen, ::testing::Values(
+	boost::tuples::make_tuple(2, 1),
 	boost::tuples::make_tuple(3, 10),
-	boost::tuples::make_tuple(2, 20)
-	));
-	
-INSTANTIATE_TEST_CASE_P(stable_test, proactor_multi_listen, ::testing::Values(
-	boost::tuples::make_tuple(1, 2, 1),
- 	boost::tuples::make_tuple(1, 3, 10),
- 	boost::tuples::make_tuple(1, 4, 20),
-	boost::tuples::make_tuple(4, 2, 1),
-	boost::tuples::make_tuple(3, 3, 10),
-	boost::tuples::make_tuple(2, 4, 20)
+	boost::tuples::make_tuple(4, 20),
+	boost::tuples::make_tuple(2, 1),
+	boost::tuples::make_tuple(3, 10),
+	boost::tuples::make_tuple(4, 20)
 	));
 
-INSTANTIATE_TEST_CASE_P(stable_test, proactor_multi_chat, ::testing::Values(
-	boost::tuples::make_tuple(1, 1),
-	boost::tuples::make_tuple(1, 10),
-	boost::tuples::make_tuple(1, 20),
-	boost::tuples::make_tuple(4, 1),
-	boost::tuples::make_tuple(3, 10),
-	boost::tuples::make_tuple(2, 20)
-	));
+INSTANTIATE_TEST_CASE_P(stable_test, reactor_multi_chat, ::testing::Values(
+	1, 10, 20, 30));

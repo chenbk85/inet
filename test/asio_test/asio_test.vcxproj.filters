@@ -41,6 +41,9 @@
     <ClCompile Include="benchmark_test.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="reactor_test.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="message.proto">

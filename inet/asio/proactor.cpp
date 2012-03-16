@@ -11,7 +11,7 @@ proactor::proactor(uint32 thread_count)
 {
 }
 
-proactor::proactor(boost::function<bool()> startup, uint32 thread_count)
+proactor::proactor(uint32 thread_count, boost::function<bool()> startup)
 	: io_service_(new inet::io_thread_service(thread_count, startup))
 {
 }

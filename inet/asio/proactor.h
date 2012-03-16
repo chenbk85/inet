@@ -10,7 +10,7 @@ class proactor : public inet::proactor
 {
 public:
 	explicit proactor(uint32 thread_count = 0);
-	proactor(boost::function<bool()> startup, uint32 thread_count);
+	explicit proactor(uint32 thread_count, boost::function<bool()> startup);
 	virtual ~proactor();
 
 	virtual inet::connector_ptr connect(const end_point& endpoint);

@@ -4,6 +4,7 @@
 
 #include "acceptor.h"
 #include "proactor.h"
+#include "reactor.h"
 #include "error.h"
 #include "session.h"
 

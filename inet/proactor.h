@@ -4,6 +4,8 @@ namespace inet {
 
 struct proactor
 {
+	virtual ~proactor() {}
+
 	virtual connector_ptr connect(const end_point& endpoint) = 0;
 	virtual connector_ptr connect(const end_point& endpoint, boost::function<void ()> connect_handler) = 0;
 	virtual acceptor_ptr listen(uint16 port) = 0;
