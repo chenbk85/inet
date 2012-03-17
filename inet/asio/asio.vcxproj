@@ -96,6 +96,7 @@
     <ClInclude Include="asio.h" />
     <ClInclude Include="asio_inc.h" />
     <ClInclude Include="header_io.h" />
+    <ClInclude Include="io_service.h" />
     <ClInclude Include="proactor.h" />
     <ClInclude Include="error.h" />
     <ClInclude Include="reactor.h" />

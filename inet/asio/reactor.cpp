@@ -15,90 +15,6 @@ reactor::~reactor()
 {
 }
 
-connector_ptr reactor::connect(const end_point& endpoint)
-{
-	auto session = create_connector();
-	session->connect(endpoint);
-
-	return session;
-}
-
-connector_ptr reactor::connect(const end_point& endpoint, boost::function<void ()> connect_handler)
-{
-	auto session = connect(endpoint);
-	session->on_connect = connect_handler;
-
-	return session;
-}
-
-acceptor_ptr reactor::listen(uint16 port)
-{
-	auto acceptor = create_acceptor();
-	acceptor->listen(port);
-	acceptor->post_accept();
-
-	acceptor_list_.insert(acceptor);
-	return acceptor;
-}
-
-acceptor_ptr reactor::listen(uint16 port, boost::function<void (session_ptr)> connection_handler)
-{
-	auto acceptor = listen(port);
-	acceptor->on_connection = connection_handler;
-
-	return acceptor;
-}
-
-timer_handle reactor::set_timeout(boost::function<void()> cb, duration expiry_time)
-{
-	timer_ptr t = create_timer();
-	if(timer_list_.insert(t).second)
-	{
-		timer_handle handle = t;
-		t->async_wait([=] {
-			if(!handle.expired()) {
-				cb();
-				clear_timeout(handle);
-			}
-		}, expiry_time);
-
-		return handle;
-	}
-
-	return timer_handle();
-}
-
-void reactor::clear_timeout(timer_handle handle)
-{
-	timer_list_.erase(handle.lock());
-}
-
-timer_handle reactor::set_interval(boost::function<void()> cb, duration expiry_time)
-{
-	timer_ptr t = create_timer();
-	if(timer_list_.insert(t).second)
-	{
-		timer_handle handle = t;
-		boost::function<void()> handler;
-		handler = [=] {
-			if(timer_ptr timer = handle.lock()) {
-				cb();
-				timer->async_wait(handler, expiry_time);
-			}
-		};
-		t->async_wait(handler, expiry_time);
-
-		return handle;
-	}
-
-	return timer_handle();
-}
-
-void reactor::clear_interval(timer_handle handle)
-{
-	clear_timeout(handle);
-}
-
 void reactor::poll()
 {
 	io_service_->poll();
@@ -121,31 +37,29 @@ bool reactor::stopped() const
 	return io_service_->stopped();
 }
 
-acceptor_ptr reactor::create_acceptor()
+boost::asio::io_service& reactor::get_io_service()
 {
-	boost::shared_ptr<asio::acceptor> acceptor(new asio::acceptor);
-	acceptor->open(*io_service_, [=] { return create_session(); });
+	return *io_service_;
+}
 
+inet::acceptor_ptr reactor::add_acceptor(inet::acceptor_ptr acceptor)
+{
+	acceptor_list_.insert(acceptor);
 	return acceptor;
 }
 
-connector_ptr reactor::create_connector()
+inet::timer_handle reactor::add_timer(inet::timer_ptr timer)
 {
-	boost::shared_ptr<asio::session> session(new asio::session);
-	session->open(*io_service_);
-
-	return session;
+	timer_list_.insert(timer);
+	return timer;
 }
 
-session_ptr reactor::create_session()
+void reactor::remove_timer(inet::timer_handle handle)
 {
-	return create_connector();
+	timer_list_.erase(handle.lock());
 }
 
-timer_ptr reactor::create_timer()
-{
-	return timer_ptr(new timer(*io_service_));
-}
+
 
 }
 }

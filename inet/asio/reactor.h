@@ -2,36 +2,27 @@
 
 #include <boost/unordered_set.hpp>
 
+#include "io_service.h"
+
 namespace inet {
 namespace asio {
 
-class reactor : public inet::reactor
+class reactor : public io_service<inet::reactor>
 {
 public:
 	reactor();
 	virtual ~reactor();
 
-	virtual connector_ptr connect(const end_point& endpoint);
-	virtual connector_ptr connect(const end_point& endpoint, boost::function<void ()> connect_handler);
-	virtual acceptor_ptr listen(uint16 port);
-	virtual acceptor_ptr listen(uint16 port, boost::function<void (session_ptr)> connection_handler);
-
-	virtual timer_handle set_timeout(boost::function<void()> cb, duration expiry_time);
-	virtual void clear_timeout(timer_handle handle);
-	virtual timer_handle set_interval(boost::function<void()> cb, duration expiry_time);
-	virtual void clear_interval(timer_handle handle);
-
 	virtual void poll();
-
 	virtual void run();
 	virtual void set_end();
 	virtual bool stopped() const;
 
 protected:
-	virtual acceptor_ptr create_acceptor();
-	virtual connector_ptr create_connector();
-	virtual session_ptr create_session();
-	virtual timer_ptr create_timer();
+	virtual boost::asio::io_service& get_io_service();
+	virtual inet::acceptor_ptr add_acceptor(inet::acceptor_ptr acceptor);
+	virtual inet::timer_handle add_timer(inet::timer_ptr timer);
+	virtual void remove_timer(inet::timer_handle handle);
 
 protected:
 	boost::scoped_ptr<boost::asio::io_service> io_service_;

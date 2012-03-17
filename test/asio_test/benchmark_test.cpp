@@ -31,7 +31,7 @@ TEST_P(multi_thread_connect_benchmark, connect_test)
 	}
 
 	net->set_timeout([&] {
-		net->set_force_end();
+		net->set_end();
 	}, boost::chrono::milliseconds(time_out));
 
 	net->wait_end();
@@ -68,7 +68,7 @@ TEST_P(multi_thread_chat_benchmark, chat_test)
 		++accepted_count;
 		session->on_close = [&] {
 			if(connect_count <= ++closed_count) {
-				net->set_force_end();
+				net->set_end();
 			}
 		};
 		msg::chat message;
