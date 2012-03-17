@@ -20,7 +20,7 @@ void thread_main(boost::asio::io_service& io_service
 
 uint32 concurrency_thread_count(uint32 size)
 {
-	return size == 0 ? boost::thread::hardware_concurrency() : size;
+	return size == 0 ? boost::thread::hardware_concurrency() * 2 : size;
 }
 }//namespace detail
 
