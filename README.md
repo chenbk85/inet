@@ -3,7 +3,7 @@
   
   c++ network framework built on boost::asio and tbb [using c++11]
 
-  proactor
+	/*proactor*/
 	inet::asio::proactor net;
 	net.listen(port_number,[&] (inet::session_ptr session) {
 		session->on_data = [&] (const inet::shared_buffer& buffer) {
@@ -11,8 +11,8 @@
 		};
 	});
 	net.wait_end();
-
-  reactor
+	
+	/*reactor*/
 	inet::asio::reactor net;
 	net.listen(port_number,[&] (inet::session_ptr session) {
 		session->on_data = [&] (const inet::shared_buffer& buffer) {
