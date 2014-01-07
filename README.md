@@ -1,28 +1,27 @@
-
 # inet
   
   c++ network framework built on boost::asio and tbb [using c++11]
 
 	/*proactor*/
-	inet::asio::proactor net;
-	net.listen(port_number,[&] (inet::session_ptr session) {
+	inet::asio::proactor io;
+	io.listen(port_number,[&] (inet::session_ptr session) {
 		session->on_data = [&] (const inet::shared_buffer& buffer) {
 			session->send(buffer);
 		};
 	});
-	net.wait_end();
+	io.wait_end();
 	
 	/*reactor*/
-	inet::asio::reactor net;
-	net.listen(port_number,[&] (inet::session_ptr session) {
+	inet::asio::reactor io;
+	io.listen(port_number,[&] (inet::session_ptr session) {
 		session->on_data = [&] (const inet::shared_buffer& buffer) {
 			session->send(buffer);
 		};
 	});
-	net.run();
+	io.run();
 	/* or
-	while(!net.stopped()) {
-		net.poll();
+	while(!io.stopped()) {
+		io.poll();
 		boost::thread::yield();
 	}*/
 
